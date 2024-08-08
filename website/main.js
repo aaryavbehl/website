@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from "three";
 import vertex from "./shaders/vertex.glsl";
 import fragment from "./shaders/fragment.glsl";
+import gsap from "gsap";
 
 class Site {
   constructor() {
@@ -103,8 +104,30 @@ class Site {
     });
   }
 
+
+  hoverOverLinks() {
+    const links = document.querySelectorAll(".links a");
+    links.forEach{(link, i) => {
+      link.addEventListener("mouseover", (e) => {
+        this.material.uniforms.uTimeline.value = 0.0;
+
+        gsap.to(this.material.uniforms.uTimeline, {
+          value: 2.0,
+          duration: 2,
+          onStart: () => {
+            this.uEndIndex = i;
+            this.material.uniforms.uStartIndex.value = this.uStartIndex;
+            this.material.uniforms.uStartIndex.value = this.uEndIndex;
+            this.uStartIndex = this.uEndIndex;
+          }
+        })
+      });
+    }};
+  }
+
   render() {
     this.time++;
+    this.material.uniforms.uTime.value = this.time;
     this.renderer.render(this.scene, this.camera);
     window.requestAnimationFrame(this.render.bind(this));
   }

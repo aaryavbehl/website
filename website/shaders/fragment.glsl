@@ -1,5 +1,12 @@
-uniform sampler2D uImage;
 varying vec2 vUv;
+uniform float uTime;
+uniform float uTimeline;
+uniform int uStartIndex;
+uniform int uEndIndex;
+uniform sampler2D uImage1;
+uniform sampler2D uImage2;
+uniform sampler2D uImage3;
+uniform sampler2D uImage4;
 
 #define NUM_OCTAVES 5
 
@@ -31,9 +38,44 @@ float fbm(vec2 x) {
 	return v;
 }
 
-#pragma glslify: export(fbm)
+vec4sampleColor(int index, vec2 uv) {
+	if(index == 0){
+		return texture2D(uImage1, uv);
+	}
+	else if(index == 1){
+		return texture2D(uImage2, uv);
+	}
+	else if(index == 2){
+		return texture2D(uImage3, uv);
+	}
+	else{
+		return texture2D(uImage4, uv);
+	}
+
+	return vec4(1.0);
+}
 
 void main() {
+	vec2 uv = vUv;
     //fbm();
-    gl_FragColor = texture2D(uImage, vUv);
+	uv -= 0.5;
+	float wave = fbm(3.5 * uv + uTime/13.0);
+	float strength = smoothstep(.0, 1.0, uTimeline) - smoothstep(2.0,3.0, uTimeline);
+	float distort = mix(1.0, 1.2+strength);
+	uv *= distort;
+	uv += 0.5;
+
+	if(uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+		discard;
+	}
+
+	vec4 startTexture = sampleColor(uStartIndex);
+	vec4 endTexture = sampleColor(uEndIndex, uv);
+
+	float changeTimeline = smoothstep(.5, 2.0, uTimeline);
+	float mixer = 1.0 - step(changeTimeline, wave);
+
+	vec4 tex = mix(startTexture, endTexture, mixer);
+
+    gl_FragColor = texture2D(uImage1, uv);
 }
